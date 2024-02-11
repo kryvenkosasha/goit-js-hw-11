@@ -88,7 +88,7 @@ function createMarcup(images) {
 }
 
 function renderImages(data) {
-  if (!data || data.hits.length === 0) {
+  if (data.hits.length === 0) {
     return iziToast.show({
       message: 'За запитом нічого не знайдено',
       color: 'red',
