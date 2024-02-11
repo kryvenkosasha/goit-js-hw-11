@@ -14,25 +14,38 @@ refs.searchForm.addEventListener('submit', e => {
   if (refs.searchInput.value === '') return;
 
   const value = refs.searchInput.value;
-  searchImages(value);
+  searchImages(value).then(data => {
+    renderImages(data)
+  });
 });
 
 function searchImages(userValue) {
-  const BASE_URL = 'https://pixabay.com/api/';
-  const END_POINT = '/api/';
-  const url = BASE_URL + END_POINT;
+  const BASE_URL =
+    'https://pixabay.com/api/?key=42312276-5bc23f4af127c6565aecd0d27';
 
   const options = {
-    headers: {
-      key: '42312276-5bc23f4af127c6565aecd0d27',
-      q: `${userValue}`,
-      image_type: 'photo',
-      orientation: 'horizontal',
-      safesearch: 'true',
-    },
+    q: `${userValue}`,
+    image_type: 'photo',
+    orientation: 'horizontal',
+    safesearch: true,
   };
-
-  return fetch(url, options).then(res => console.log(res));
+  return fetch(BASE_URL, options).then(res => res.json());
 }
 
-function createMarcup() {}
+function createMarcup(images) {
+  images.map((image) => {
+    return `<li><a href=`${ image.largeImageURL } `><img src=`${ image.webformatURL } `></a>
+  <p>`${image.tags} `</p>
+  <p>`${image.likes} `</p>
+  <p>`${image.views} `</p>
+  <p>`${image.comments} `</p>
+  <p>`${image.downloads} `</p>
+  
+  </li>`
+})
+}
+
+function renderImages(data) {
+  const markup = createMarcup(data);
+  refs.image.insertAdjacentHTML('afterbegin', markup);
+}
