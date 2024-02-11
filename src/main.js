@@ -88,6 +88,12 @@ function createMarcup(images) {
 }
 
 function renderImages(data) {
+  if (!data || data.hits.length === 0) {
+    return iziToast.show({
+      message: 'За запитом нічого не знайдено',
+      color: 'red',
+    });
+  }
   const markup = createMarcup(data);
   refs.gallery.insertAdjacentHTML('afterbegin', markup);
 }
