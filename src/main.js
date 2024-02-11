@@ -7,21 +7,54 @@ const refs = {
   searchForm: document.querySelector('form'),
   searchInput: document.querySelector('input'),
   searchButton: document.querySelector('button'),
+  gallery: document.querySelector('.images'),
 };
+
+hideLoader();
+
+const lightbox = new SimpleLightbox('.images a');
+
+refs.gallery.addEventListener('click', e => {
+  if (e.target === e.currentTarget) return;
+  e.preventDefault();
+});
 
 refs.searchForm.addEventListener('submit', e => {
   e.preventDefault();
-  if (refs.searchInput.value === '') return;
+  const userValue = e.target.elements.input.value;
 
-  const value = refs.searchInput.value;
-  searchImages(value).then(data => {
-    renderImages(data)
-  });
+  if (userValue === '') return;
+
+  loader();
+
+  searchImages(userValue)
+    .then(data => {
+      refs.gallery.innerHTML = '';
+      renderImages(data);
+      hideLoader();
+      lightbox.refresh();
+    })
+    .catch(error => {
+      console.log(error);
+      hideLoader();
+    });
 });
 
+function loader() {
+  const loaderElement = document.createElement('span');
+  loaderElement.className = 'loader';
+  document.body.appendChild(loaderElement);
+}
+
+function hideLoader() {
+  const loaderElement = document.querySelector('.loader');
+  if (loaderElement && loaderElement.parentNode) {
+    loaderElement.parentNode.removeChild(loaderElement);
+  }
+}
+
 function searchImages(userValue) {
-  const BASE_URL =
-    'https://pixabay.com/api/?key=42312276-5bc23f4af127c6565aecd0d27';
+  const BASE_URL = `https://pixabay.com/api/?key=42312276-5bc23f4af127c6565aecd0d27&q=${userValue}`;
 
   const options = {
     q: `${userValue}`,
@@ -33,19 +66,28 @@ function searchImages(userValue) {
 }
 
 function createMarcup(images) {
-  images.map((image) => {
-    return `<li><a href=`${ image.largeImageURL } `><img src=`${ image.webformatURL } `></a>
-  <p>`${image.tags} `</p>
-  <p>`${image.likes} `</p>
-  <p>`${image.views} `</p>
-  <p>`${image.comments} `</p>
-  <p>`${image.downloads} `</p>
+  // console.log(images);
+  if (images.hits.length === 0)
+    return iziToast.show({
+      message: 'За запитом нічого не знайдено',
+      color: 'red',
+    });
+  const markup = images.hits
+    .map(image => {
+      return `<li><a href=${image.largeImageURL} ><img src=${image.webformatURL}></a>
+  <p>Tags: ${image.tags} </p>
+  <p>Likes: ${image.likes} </p>
+  <p>Views: ${image.views} </p>
+  <p>Comments: ${image.comments} </p>
+  <p>Downloads: ${image.downloads} </p>
   
-  </li>`
-})
+  </li>`;
+    })
+    .join('\n');
+  return markup;
 }
 
 function renderImages(data) {
   const markup = createMarcup(data);
-  refs.image.insertAdjacentHTML('afterbegin', markup);
+  refs.gallery.insertAdjacentHTML('afterbegin', markup);
 }
