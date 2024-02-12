@@ -8,6 +8,7 @@ const refs = {
   searchInput: document.querySelector('input'),
   searchButton: document.querySelector('button'),
   gallery: document.querySelector('.images'),
+  loader: document.querySelector('.loader'), 
 };
 
 hideLoader();
@@ -19,38 +20,32 @@ refs.gallery.addEventListener('click', e => {
   e.preventDefault();
 });
 
-refs.searchForm.addEventListener('submit', e => {
+refs.searchForm.addEventListener('submit', async e => {
   e.preventDefault();
   const userValue = e.target.elements.input.value;
 
   if (userValue === '') return;
 
-  loader();
+  showLoader(); 
 
-  searchImages(userValue)
-    .then(data => {
-      refs.gallery.innerHTML = '';
-      renderImages(data);
-      hideLoader();
-      lightbox.refresh();
-    })
-    .catch(error => {
-      console.log(error);
-      hideLoader();
-    });
+  try {
+    const data = await searchImages(userValue);
+    refs.gallery.innerHTML = '';
+    renderImages(data);
+    lightbox.refresh();
+  } catch (error) {
+    console.log(error);
+  } finally {
+    hideLoader();
+  }
 });
 
-function loader() {
-  const loaderElement = document.createElement('span');
-  loaderElement.className = 'loader';
-  document.body.appendChild(loaderElement);
+function showLoader() {
+  refs.loader.style.display = 'block'; 
 }
 
 function hideLoader() {
-  const loaderElement = document.querySelector('.loader');
-  if (loaderElement && loaderElement.parentNode) {
-    loaderElement.parentNode.removeChild(loaderElement);
-  }
+  refs.loader.style.display = 'none'; 
 }
 
 function searchImages(userValue) {
@@ -66,12 +61,13 @@ function searchImages(userValue) {
 }
 
 function createMarcup(images) {
-  // console.log(images);
-  if (images.hits.length === 0)
-    return iziToast.show({
+  if (images.hits.length === 0) {
+    iziToast.show({
       message: 'За запитом нічого не знайдено',
       color: 'red',
     });
+    return;
+  }
   const markup = images.hits
     .map(image => {
       return `<li><a href=${image.largeImageURL} ><img src=${image.webformatURL}></a>
@@ -89,10 +85,11 @@ function createMarcup(images) {
 
 function renderImages(data) {
   if (data.hits.length === 0) {
-    return iziToast.show({
+    iziToast.show({
       message: 'За запитом нічого не знайдено',
       color: 'red',
     });
+    return;
   }
   const markup = createMarcup(data);
   refs.gallery.insertAdjacentHTML('afterbegin', markup);
